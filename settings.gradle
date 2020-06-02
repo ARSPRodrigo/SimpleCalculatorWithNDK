@@ -1,0 +1,2 @@
+rootProject.name='CalcNDK070'
+include ':app'
