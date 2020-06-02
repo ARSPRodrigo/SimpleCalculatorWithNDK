@@ -95,8 +95,8 @@
                 android:paddingTop="25dp"
                 android:paddingBottom="25dp"
                 android:stateListAnimator="@null"
-                android:tag="/"
-                android:text="/"
+                android:tag="÷"
+                android:text="÷"
                 android:textColor="#808080"
                 android:textSize="30sp" />
 

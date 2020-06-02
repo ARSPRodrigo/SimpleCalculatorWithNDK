@@ -11,8 +11,8 @@ public class MainActivity extends AppCompatActivity
 {
 
     private TextView textView;
-    private String num1String = "";
-    private String num2String = "";
+    private String number1 = "";
+    private String number2 = "";
     private String operator = "";
     private String result = "";
 
@@ -68,21 +68,21 @@ public class MainActivity extends AppCompatActivity
             case "7":
             case "8":
             case "9":
-            case ".":
                 handleDigit( tag );
+                break;
+            case ".":
+                handleDot( tag );
                 break;
             case "+":
             case "-":
             case "*":
-            case "/":
+            case "÷":
             case "^":
+            case "sqrt":
                 handleOperator( tag );
                 break;
-            case "sqrt":
-                handleSqrt();
-                break;
             case "=":
-                calculate();
+                handleCalculation();
                 break;
             case "C":
                 handleClear();
@@ -102,24 +102,55 @@ public class MainActivity extends AppCompatActivity
         {
             if( result.isEmpty() )
             {
-                num1String = appendDigit( num1String, digit );
+                number1 = appendDigit( number1, digit );
             }
             else
             {
-                num1String = digit;
+                number1 = digit;
                 result = "";
             }
         }
         else
         {
-            num2String = appendDigit( num2String, digit );
+            number2 = appendDigit( number2, digit );
         }
         refreshTextView();
     }
 
+    private void handleDot( String dot )
+    {
+        if( operator.isEmpty() && result.isEmpty() )
+        {
+            number1 = appendDot( dot, number1 );
+        }
+        else if( operator.isEmpty() )
+        {
+            result = "";
+            number1 = "0" + dot;
+        }
+        else
+        {
+            number2 = appendDot( dot, number2 );
+        }
+        refreshTextView();
+    }
+
+    private String appendDot( String dot, String number )
+    {
+        if( number.isEmpty() )
+        {
+            number = "0" + dot;
+        }
+        else
+        {
+            number += dot;
+        }
+        return number;
+    }
+
     private String appendDigit( String number, String digit )
     {
-        if( !number.isEmpty() && !number.equals( "." ) && Double.parseDouble( number ) == 0 && !digit.equals( "." ) )
+        if( !number.isEmpty() && !number.equals( "0." ) && Double.parseDouble( number ) == 0 )
         {
             number = digit;
         }
@@ -132,44 +163,49 @@ public class MainActivity extends AppCompatActivity
 
     private void handleOperator( String operator )
     {
-        if( num1String.isEmpty() )
+        if( operator.equals( "sqrt" ) )
         {
-            num1String = "0";
+            sqrt();
         }
-        else if( !this.operator.isEmpty() && !num2String.isEmpty() )
+        else
         {
-            calculate();
-            num1String = result;
-            refreshTextView();
+            if( number1.isEmpty() )
+            {
+                number1 = "0";
+            }
+            else if( !this.operator.isEmpty() && !number2.isEmpty() )
+            {
+                handleCalculation();
+                number1 = result;
+                refreshTextView();
+            }
+            this.operator = operator;
         }
-        this.operator = operator;
         refreshTextView();
     }
 
-    private void handleSqrt()
+    private void sqrt()
     {
-        if( !num1String.isEmpty() && !operator.isEmpty() && !num2String.isEmpty() )
+        if( !number1.isEmpty() && !operator.isEmpty() && !number2.isEmpty() )
         {
-            calculate();
-            result = formatOutput( String.valueOf( sqrtFromJNI( Double.parseDouble( num1String ) ) ) );
-            num1String = result;
-            refreshTextView();
+            handleCalculation();
+            result = formatOutput( String.valueOf( sqrtFromJNI( Double.parseDouble( number1 ) ) ) );
+            number1 = result;
         }
-        else if( !num1String.isEmpty() )
+        else if( !number1.isEmpty() )
         {
-            result = formatOutput( String.valueOf( sqrtFromJNI( Double.parseDouble( num1String ) ) ) );
-            num1String = result;
+            result = formatOutput( String.valueOf( sqrtFromJNI( Double.parseDouble( number1 ) ) ) );
+            number1 = result;
             operator = "";
-            refreshTextView();
         }
     }
 
-    private void calculate()
+    private void handleCalculation()
     {
-        if( !num1String.isEmpty() && !operator.isEmpty() && !num2String.isEmpty() )
+        if( !number1.isEmpty() && !operator.isEmpty() && !number2.isEmpty() )
         {
-            double num1 = Double.parseDouble( num1String );
-            double num2 = Double.parseDouble( num2String );
+            double num1 = Double.parseDouble( this.number1 );
+            double num2 = Double.parseDouble( number2 );
             double ans = 0;
             switch( operator )
             {
@@ -182,7 +218,7 @@ public class MainActivity extends AppCompatActivity
                 case "*":
                     ans = multiplyFromJNI( num1, num2 );
                     break;
-                case "/":
+                case "÷":
                     ans = divideFromJNI( num1, num2 );
                     break;
                 case "^":
@@ -192,8 +228,8 @@ public class MainActivity extends AppCompatActivity
                     handleError();
             }
             result = formatOutput( Double.toString( ans ) );
-            num1String = result;
-            num2String = "";
+            this.number1 = result;
+            number2 = "";
             operator = "";
             refreshTextView();
         }
@@ -201,8 +237,8 @@ public class MainActivity extends AppCompatActivity
 
     private void handleClear()
     {
-        num1String = "";
-        num2String = "";
+        number1 = "";
+        number2 = "";
         operator = "";
         result = "";
         textView.setText( "" );
@@ -210,19 +246,19 @@ public class MainActivity extends AppCompatActivity
 
     private void handleBack()
     {
-        if( !num1String.isEmpty() && operator.isEmpty() )
+        if( !number1.isEmpty() && operator.isEmpty() )
         {
-            num1String = num1String.substring( 0, num1String.length() - 1 );
+            number1 = number1.substring( 0, number1.length() - 1 );
             refreshTextView();
         }
-        else if( !operator.isEmpty() && num2String.isEmpty() )
+        else if( !operator.isEmpty() && number2.isEmpty() )
         {
             operator = "";
             refreshTextView();
         }
         else
         {
-            num2String = num2String.substring( 0, num2String.length() - 1 );
+            number2 = number2.substring( 0, number2.length() - 1 );
             refreshTextView();
         }
     }
@@ -238,20 +274,24 @@ public class MainActivity extends AppCompatActivity
     {
         if( operator.isEmpty() )
         {
-            textView.setText( num1String );
+            textView.setText( number1 );
         }
-        else if( num2String.isEmpty() )
+        else if( number2.isEmpty() )
         {
-            textView.setText( num1String + ( operator.equals( "*" ) ? "×" : operator ) );
+            textView.setText( number1 + ( operator.equals( "*" ) ? "×" : operator ) );
         }
         else
         {
-            textView.setText( num1String + ( operator.equals( "*" ) ? "×" : operator ) + num2String );
+            textView.setText( number1 + ( operator.equals( "*" ) ? "×" : operator ) + number2 );
         }
     }
 
     private String formatOutput( String output )
     {
+        if( output.length() > 14 )
+        {
+            output = output.substring( 0, 14 ); // max chars in the text view
+        }
         if( output.split( "\\." )[1].equals( "0" ) )
         {
             return output.split( "\\." )[0];
