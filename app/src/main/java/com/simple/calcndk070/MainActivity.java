@@ -10,17 +10,27 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity
 {
 
-    private TextView textView;
-    private String number1 = "";
-    private String number2 = "";
-    private String operator = "";
-    private String result = "";
+    TextView textView;
+    String number1 = "";
+    String number2 = "";
+    String operator = "";
+    String result = "";
+
+    static boolean loadLib;
 
     // Used to load the 'native-lib' library on application startup.
 
     static
     {
-        System.loadLibrary( "native-lib" );
+        loadLib = true;
+    }
+
+    public MainActivity()
+    {
+        if( loadLib )
+        {
+            System.loadLibrary( "native-lib" );
+        }
     }
 
     @Override
@@ -31,7 +41,7 @@ public class MainActivity extends AppCompatActivity
 
         // Example of a call to a native method
         textView = findViewById( R.id.sample_text );
-        textView.setText( stringFromJNI() );
+        setText( stringFromJNI() );
     }
 
     /**
@@ -96,19 +106,12 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void handleDigit( String digit )
+    void handleDigit( String digit )
     {
         if( operator.isEmpty() )
         {
-            if( result.isEmpty() )
-            {
-                number1 = appendDigit( number1, digit );
-            }
-            else
-            {
-                number1 = digit;
-                result = "";
-            }
+            number1 = appendDigit( number1, digit );
+            result = "";
         }
         else
         {
@@ -117,7 +120,7 @@ public class MainActivity extends AppCompatActivity
         refreshTextView();
     }
 
-    private void handleDot( String dot )
+    void handleDot( String dot )
     {
         if( operator.isEmpty() && result.isEmpty() )
         {
@@ -135,8 +138,12 @@ public class MainActivity extends AppCompatActivity
         refreshTextView();
     }
 
-    private String appendDot( String dot, String number )
+    String appendDot( String dot, String number )
     {
+        if( number.contains( "." ) )
+        {
+            return number;
+        }
         if( number.isEmpty() )
         {
             number = "0" + dot;
@@ -148,7 +155,7 @@ public class MainActivity extends AppCompatActivity
         return number;
     }
 
-    private String appendDigit( String number, String digit )
+    String appendDigit( String number, String digit )
     {
         if( !number.isEmpty() && !number.equals( "0." ) && Double.parseDouble( number ) == 0 )
         {
@@ -161,7 +168,7 @@ public class MainActivity extends AppCompatActivity
         return number;
     }
 
-    private void handleOperator( String operator )
+    void handleOperator( String operator )
     {
         if( operator.equals( "sqrt" ) )
         {
@@ -177,14 +184,13 @@ public class MainActivity extends AppCompatActivity
             {
                 handleCalculation();
                 number1 = result;
-                refreshTextView();
             }
             this.operator = operator;
         }
         refreshTextView();
     }
 
-    private void sqrt()
+    void sqrt()
     {
         if( !number1.isEmpty() && !operator.isEmpty() && !number2.isEmpty() )
         {
@@ -200,7 +206,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void handleCalculation()
+    void handleCalculation()
     {
         if( !number1.isEmpty() && !operator.isEmpty() && !number2.isEmpty() )
         {
@@ -235,16 +241,16 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void handleClear()
+    void handleClear()
     {
         number1 = "";
         number2 = "";
         operator = "";
         result = "";
-        textView.setText( "" );
+        setText( "" );
     }
 
-    private void handleBack()
+    void handleBack()
     {
         if( !number1.isEmpty() && operator.isEmpty() )
         {
@@ -266,28 +272,35 @@ public class MainActivity extends AppCompatActivity
     @SuppressLint( "SetTextI18n" )
     private void handleError()
     {
-        textView.setText( "Error." );
+        setText("Error.");
     }
 
     @SuppressLint( "SetTextI18n" )
-    private void refreshTextView()
+    void refreshTextView()
     {
         if( operator.isEmpty() )
         {
-            textView.setText( number1 );
+            setText( number1 );
         }
         else if( number2.isEmpty() )
         {
-            textView.setText( number1 + ( operator.equals( "*" ) ? "×" : operator ) );
+            setText( number1 + ( operator.equals( "*" ) ? "×" : operator ) );
         }
         else
         {
-            textView.setText( number1 + ( operator.equals( "*" ) ? "×" : operator ) + number2 );
+            setText( number1 + ( operator.equals( "*" ) ? "×" : operator ) + number2 );
         }
     }
 
-    private String formatOutput( String output )
+    String formatOutput( String output )
     {
+        if( output.contains( "E" ) && output.length() > 14 )
+        {
+            String exp = "E" + output.split( "E" )[1];
+            int e = 14 - ( exp.length() + 1 );
+            String num = output.split( "E" )[0];
+            output = num.substring( 0, e ) + exp;
+        }
         if( output.length() > 14 )
         {
             output = output.substring( 0, 14 ); // max chars in the text view
@@ -300,5 +313,10 @@ public class MainActivity extends AppCompatActivity
         {
             return output;
         }
+    }
+
+    void setText(String text)
+    {
+        textView.setText( text );
     }
 }
